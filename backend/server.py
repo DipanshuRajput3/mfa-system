@@ -124,6 +124,13 @@ def generate_session_token() -> str:
     """Generate secure session token"""
     return hashlib.sha256(str(uuid.uuid4()).encode()).hexdigest()
 
+def get_client_ip(request: Request) -> str:
+    """Get real client IP (works behind proxies like Render)"""
+    forwarded = request.headers.get('x-forwarded-for')
+    if forwarded:
+        return forwarded.split(',')[0].strip()
+    return request.client.host if request.client else 'unknown'
+
 def get_device_fingerprint(request: Request) -> str:
     """Create device fingerprint from user agent"""
     user_agent = request.headers.get('user-agent', 'Unknown')
@@ -229,7 +236,7 @@ async def register_user(user_data: UserRegister, request: Request):
         await db.users.insert_one(doc)
         
         # Log security event
-        ip_address = request.client.host
+        ip_address = get_client_ip(request)
         device_info = get_device_fingerprint(request)
         await log_security_event(
             username=user_data.username,
@@ -258,7 +265,7 @@ async def login_user(login_data: UserLogin, request: Request):
     Algorithm implementation from research paper
     """
     try:
-        ip_address = request.client.host
+        ip_address = get_client_ip(request)
         device_info = get_device_fingerprint(request)
         
         # Step 1: Validate Password
@@ -390,7 +397,7 @@ async def verify_otp(otp_data: OTPVerify, request: Request):
     Verify OTP for MFA
     """
     try:
-        ip_address = request.client.host
+        ip_address = get_client_ip(request)
         device_info = get_device_fingerprint(request)
         
         # Find valid OTP
@@ -612,7 +619,7 @@ async def get_stats_overview(username: str):
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[o.strip() for o in os.environ.get('CORS_ORIGINS', 'http://localhost:3000').split(',')],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
