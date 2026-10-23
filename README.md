@@ -2,6 +2,8 @@
 
 ## Based on Research Paper: "Enhancing Web Security Using Multi-Factor Authentication"
 
+🔗 **Live Demo:** https://mfa-system-kappa.vercel.app
+
 This project implements a comprehensive Risk-Based Multi-Factor Authentication (RB-MFA) system as described in the research paper. The system dynamically enforces MFA challenges based on contextual risk assessment.
 
 ---
@@ -11,17 +13,22 @@ This project implements a comprehensive Risk-Based Multi-Factor Authentication (
 ### Core Authentication Features
 - **User Registration & Login** - Secure user account management
 - **Risk-Based MFA** - Dynamic OTP verification triggered by risk score
-- **Device Fingerprinting** - Unique device identification
-- **Session Management** - Secure token-based sessions
+- **Device Fingerprinting** - Hash of User-Agent, Accept-Language and platform headers
+- **Session Management** - Secure token-based sessions (Bearer token on protected APIs)
+- **Email OTP** - 6-digit OTP sent to the registered email via Brevo's email API (free plan)
 - **Security Logging** - Comprehensive audit trail
 
 ### Risk Score Computation
 The system calculates risk scores (0-100) based on:
-- ✅ IP Address history
-- ✅ Device fingerprint recognition
-- ✅ Failed login attempts (last 24 hours)
-- ✅ Time of access (unusual hours detection)
-- ✅ Geographic location indicators
+| Factor | Points |
+|---|---|
+| Failed login attempts (last 24 hours) | +15 each, max 40 |
+| Unknown IP address | +25 |
+| Unknown device fingerprint | +20 |
+| Unusual hours (before 6 AM / after 10 PM, Asia/Kolkata) | +15 |
+| Country differs from last successful login (via ip-api.com) | +15 |
+
+MFA is required when the score is **≥ 50**.
 
 ### Risk Levels
 - **Low (0-30)**: Trusted login, no MFA required
@@ -54,8 +61,8 @@ Output: ALLOW / DENY
 **Backend (FastAPI - Python)**
 - Password validation with bcrypt hashing
 - Risk score computation engine
-- OTP generation & verification
-- Device fingerprinting module
+- OTP generation (`secrets` module), email delivery & verification (max 5 attempts)
+- Device fingerprinting & IP geolocation
 - Session token management
 - Security event logging
 - Threat detection system
@@ -108,7 +115,7 @@ Output: ALLOW / DENY
 ## 📦 Installation & Setup
 
 ### Prerequisites
-- Python 3.8+
+- Python 3.9+
 - Node.js 16+
 - MongoDB
 
@@ -132,8 +139,22 @@ yarn start
 ```
 MONGO_URL=mongodb://localhost:27017
 DB_NAME=mfa_database
-CORS_ORIGINS=*
+CORS_ORIGINS=http://localhost:3000,https://mfa-system-kappa.vercel.app
+BREVO_API_KEY=your-brevo-api-key
+MAIL_FROM=verified-sender@example.com
+MAIL_FROM_NAME=MFA System
 ```
+
+| Variable | Description |
+|---|---|
+| `MONGO_URL` | MongoDB connection string |
+| `DB_NAME` | Database name |
+| `CORS_ORIGINS` | Comma-separated allowed origins (default `http://localhost:3000`). `*` allows all origins but disables credentials |
+| `BREVO_API_KEY` | Brevo API key (Brevo → SMTP & API → API Keys) |
+| `MAIL_FROM` | Sender email, verified in Brevo (Senders) |
+| `MAIL_FROM_NAME` | Optional sender name (default `MFA System`) |
+
+`.env` files are git-ignored. Set real values in the Render / Vercel dashboard and never commit them. See [INSTALLATION.md](INSTALLATION.md) for the Brevo setup steps.
 
 **Frontend (.env)**
 ```
@@ -151,7 +172,7 @@ REACT_APP_BACKEND_URL=http://localhost:8001
 
 ### Session Security
 - 24-hour session expiration
-- Token-based authentication
+- Token-based authentication (`Authorization: Bearer <token>`)
 - Automatic session cleanup
 
 ### Risk Mitigation
@@ -171,6 +192,7 @@ REACT_APP_BACKEND_URL=http://localhost:8001
 - `GET /api/auth/verify-session` - Session validation
 
 ### Security & Monitoring
+These require an `Authorization: Bearer <token>` header; the username is taken from the session (401 if the token is missing, invalid or expired).
 - `GET /api/security/logs` - Security event logs
 - `GET /api/security/login-attempts` - Login attempt history
 - `GET /api/stats/overview` - Statistics overview
@@ -185,7 +207,7 @@ REACT_APP_BACKEND_URL=http://localhost:8001
 4. **Decision Point**:
    - Low Risk (< 50): Direct login, session created
    - High Risk (≥ 50): OTP challenge triggered
-5. **MFA Verification** (if required): User enters 6-digit OTP
+5. **MFA Verification** (if required): OTP is emailed to the user (valid 5 minutes, max 5 wrong attempts → 429)
 6. **Session Created**: Secure token issued for 24 hours
 7. **Dashboard Access**: View security statistics and logs
 
@@ -197,7 +219,7 @@ This project faithfully implements the concepts from the research paper:
 
 ✅ **Multi-Factor Authentication** - OTP-based second factor
 ✅ **Risk-Based Authentication** - Dynamic MFA triggering
-✅ **Device Fingerprinting** - User agent-based identification
+✅ **Device Fingerprinting** - User agent, language & platform based identification
 ✅ **Contextual Information** - IP, device, time, location
 ✅ **Threshold Management** - Configurable risk threshold
 ✅ **Session Management** - Secure token issuance
@@ -218,18 +240,18 @@ This project faithfully implements the concepts from the research paper:
    - Security logs timeline
 
 ### Design Features
-- Dark theme with gradient backgrounds
+- Clean dark theme (deep navy background, indigo primary, cyan accent) using the Inter font
+- Theme colors defined once as CSS variables in `frontend/src/App.css`
 - Responsive layout (mobile-friendly)
-- Real-time risk score visualization
-- Color-coded risk levels (green/yellow/red)
+- Risk score bar and color-coded risk badges (green/amber/red)
 - Intuitive navigation
 
 ---
 
 ## 🧪 Testing
 
-### Demo Mode
-The system displays generated OTPs on the verification page for demonstration purposes. In production, these would be sent via SMS or email.
+### OTP Delivery
+OTPs are emailed to the user's registered address via Brevo's HTTPS email API (it works on hosts that block SMTP ports, such as Render's free plan) and are never returned in API responses. The verification page only shows the masked address the OTP was sent to.
 
 ### Test Scenarios
 1. **Low Risk Login**: Same device, known IP → No MFA
@@ -245,8 +267,7 @@ The system displays generated OTPs on the verification page for demonstration pu
 - WebAuthn / FIDO2 support
 - Push notification verification
 - Biometric authentication
-- Geolocation API integration
-- Email/SMS OTP delivery
+- SMS OTP delivery
 - Advanced threat intelligence
 
 ---
@@ -279,10 +300,10 @@ This project is implemented based on academic research for educational purposes.
 ## 👨‍💻 Developer Notes
 
 - All passwords are hashed using bcrypt
-- Session tokens use SHA-256 hashing
+- OTPs and session tokens are generated with Python's `secrets` module
 - MongoDB ObjectID avoided, using UUIDs for consistency
 - Hot reload enabled for development
-- CORS configured for cross-origin requests
+- CORS origins configured via the `CORS_ORIGINS` env variable
 - Comprehensive error handling implemented
 
 ---
@@ -290,11 +311,26 @@ This project is implemented based on academic research for educational purposes.
 ## 🎯 Project Structure
 
 ```
-/app
+mfa-system/
 ├── backend/
-│   ├── server.py          # FastAPI application with all endpoints
+│   ├── server.py          # App entrypoint (uvicorn server:app): CORS + routers
+│   ├── config.py          # Environment settings & constants
+│   ├── database.py        # MongoDB connection
+│   ├── models.py          # Pydantic request & database models
+│   ├── routes/            # API endpoints
+│   │   ├── auth.py        # register, login, verify-otp, verify-session
+│   │   ├── security.py    # security logs, login attempts
+│   │   └── stats.py       # statistics overview
+│   ├── services/          # Business logic
+│   │   ├── risk.py        # Risk score engine
+│   │   ├── context.py     # Client IP, device fingerprint, geolocation
+│   │   ├── otp.py         # OTP issue & verification
+│   │   ├── notifications.py # OTP email via Brevo
+│   │   ├── sessions.py    # Session tokens & Bearer auth
+│   │   ├── passwords.py   # bcrypt hashing
+│   │   └── audit.py       # Login attempts & security logs
 │   ├── requirements.txt   # Python dependencies
-│   └── .env              # Backend environment variables
+│   └── .env               # Backend environment variables (not committed)
 │
 ├── frontend/
 │   ├── src/

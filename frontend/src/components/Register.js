@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { Shield, Mail, User, Lock, UserPlus } from 'lucide-react';
+import { Shield, Mail, User, Lock, UserPlus, AlertTriangle } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -41,42 +41,39 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <div className="p-3 bg-blue-500/20 rounded-full">
-              <Shield className="w-12 h-12 text-blue-400" />
-            </div>
+          <div className="ui-icon-badge w-16 h-16 mb-5">
+            <Shield className="w-8 h-8" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">
+          <h1 className="ui-heading text-2xl sm:text-3xl font-bold tracking-tight mb-2">
             Multi-Factor Authentication
           </h1>
-          <p className="text-slate-400">Create your secure account</p>
+          <p className="ui-muted">Create your secure account</p>
         </div>
 
         {/* Registration Form */}
-        <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-slate-700">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="ui-card p-6 sm:p-8">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm">
-                {error}
+              <div className="ui-alert-error px-4 py-3 text-sm flex items-start">
+                <AlertTriangle className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
+                <span>{error}</span>
               </div>
             )}
 
             <div>
-              <label className="block text-slate-300 text-sm font-medium mb-2">
-                Full Name
-              </label>
+              <label className="ui-label mb-2">Full Name</label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <User className="ui-input-icon" />
                 <input
                   type="text"
                   name="full_name"
                   value={formData.full_name}
                   onChange={handleChange}
-                  className="w-full pl-11 pr-4 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="ui-input w-full pl-11 pr-4 py-3"
                   placeholder="John Doe"
                   required
                   data-testid="register-fullname-input"
@@ -85,17 +82,15 @@ const Register = () => {
             </div>
 
             <div>
-              <label className="block text-slate-300 text-sm font-medium mb-2">
-                Username
-              </label>
+              <label className="ui-label mb-2">Username</label>
               <div className="relative">
-                <UserPlus className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <UserPlus className="ui-input-icon" />
                 <input
                   type="text"
                   name="username"
                   value={formData.username}
                   onChange={handleChange}
-                  className="w-full pl-11 pr-4 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="ui-input w-full pl-11 pr-4 py-3"
                   placeholder="johndoe"
                   required
                   data-testid="register-username-input"
@@ -104,17 +99,15 @@ const Register = () => {
             </div>
 
             <div>
-              <label className="block text-slate-300 text-sm font-medium mb-2">
-                Email
-              </label>
+              <label className="ui-label mb-2">Email</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <Mail className="ui-input-icon" />
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full pl-11 pr-4 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="ui-input w-full pl-11 pr-4 py-3"
                   placeholder="john@example.com"
                   required
                   data-testid="register-email-input"
@@ -123,17 +116,15 @@ const Register = () => {
             </div>
 
             <div>
-              <label className="block text-slate-300 text-sm font-medium mb-2">
-                Password
-              </label>
+              <label className="ui-label mb-2">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <Lock className="ui-input-icon" />
                 <input
                   type="password"
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full pl-11 pr-4 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="ui-input w-full pl-11 pr-4 py-3"
                   placeholder="••••••••"
                   required
                   minLength="6"
@@ -145,40 +136,38 @@ const Register = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="ui-btn-primary w-full py-3 px-4"
               data-testid="register-submit-button"
             >
               {loading ? 'Creating Account...' : 'Create Account'}
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-slate-400">
-              Already have an account?{' '}
-              <Link to="/login" className="text-blue-400 hover:text-blue-300 font-medium">
-                Sign in
-              </Link>
-            </p>
-          </div>
+          <p className="ui-muted mt-6 text-center text-sm">
+            Already have an account?{' '}
+            <Link to="/login" className="ui-link">
+              Sign in
+            </Link>
+          </p>
         </div>
 
         {/* Info Section */}
-        <div className="mt-8 bg-slate-800/30 backdrop-blur-sm rounded-lg p-6 border border-slate-700">
-          <h3 className="text-white font-semibold mb-3 flex items-center">
-            <Shield className="w-5 h-5 mr-2 text-blue-400" />
+        <div className="ui-callout mt-6 p-5">
+          <h3 className="ui-accent font-semibold mb-3 flex items-center">
+            <Shield className="w-5 h-5 mr-2" />
             Enhanced Security Features
           </h3>
-          <ul className="text-slate-400 text-sm space-y-2">
+          <ul className="ui-muted text-sm space-y-2">
             <li className="flex items-start">
-              <span className="text-blue-400 mr-2">•</span>
+              <span className="ui-accent mr-2">•</span>
               <span>Risk-based Multi-Factor Authentication</span>
             </li>
             <li className="flex items-start">
-              <span className="text-blue-400 mr-2">•</span>
+              <span className="ui-accent mr-2">•</span>
               <span>Device fingerprinting for enhanced security</span>
             </li>
             <li className="flex items-start">
-              <span className="text-blue-400 mr-2">•</span>
+              <span className="ui-accent mr-2">•</span>
               <span>Comprehensive security logging and monitoring</span>
             </li>
           </ul>

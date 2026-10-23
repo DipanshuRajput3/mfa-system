@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import '@/App.css';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Register from '@/components/Register';
@@ -6,36 +6,35 @@ import Login from '@/components/Login';
 import Dashboard from '@/components/Dashboard';
 import OTPVerification from '@/components/OTPVerification';
 
-function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    // Check if user has valid session
+// Read the saved session synchronously so a refresh on /dashboard doesn't bounce to /login
+const loadSavedUser = () => {
+  try {
     const token = localStorage.getItem('session_token');
     const savedUser = localStorage.getItem('user');
-    if (token && savedUser) {
-      setIsAuthenticated(true);
-      setUser(JSON.parse(savedUser));
-    }
-  }, []);
+    return token && savedUser ? JSON.parse(savedUser) : null;
+  } catch {
+    return null;
+  }
+};
+
+function App() {
+  const [user, setUser] = useState(loadSavedUser);
+  const isAuthenticated = Boolean(user);
 
   const handleLogin = (userData, token) => {
     localStorage.setItem('session_token', token);
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
-    setIsAuthenticated(true);
   };
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     localStorage.removeItem('session_token');
     localStorage.removeItem('user');
     setUser(null);
-    setIsAuthenticated(false);
-  };
+  }, []);
 
   return (
-    <div className="App min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+    <div className="App ui-page">
       <BrowserRouter>
         <Routes>
           <Route path="/register" element={<Register />} />
